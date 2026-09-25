@@ -1,0 +1,14 @@
+# Root-level ignore
+node_modules/
+.pnpm-store/
+dist/
+build/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
