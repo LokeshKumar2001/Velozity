@@ -18,7 +18,7 @@ export class ProjectsController {
 
   getProjectById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const project = await this.service.getProjectById(req.params.id, req.user!);
+      const project = await this.service.getProjectById(req.params.id as string, req.user!);
       res.status(200).json({
         success: true,
         data: project,
@@ -43,7 +43,7 @@ export class ProjectsController {
 
   updateProject = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const project = await this.service.updateProject(req.params.id, req.body, req.user!);
+      const project = await this.service.updateProject(req.params.id as string, req.body, req.user!);
       res.status(200).json({
         success: true,
         message: 'Project updated successfully',
@@ -56,7 +56,7 @@ export class ProjectsController {
 
   deleteProject = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      await this.service.deleteProject(req.params.id, req.user!);
+      await this.service.deleteProject(req.params.id as string, req.user!);
       res.status(200).json({
         success: true,
         message: 'Project deleted successfully',

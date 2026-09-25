@@ -38,7 +38,7 @@ export const initQueueManager = async (): Promise<void> => {
           },
           removeOnComplete: 100,
           removeOnFail: 50,
-        }
+        } as any
       );
 
       console.log(`[scheduler] BullMQ overdue scheduler active (interval: ${env.OVERDUE_JOB_INTERVAL_MINUTES}m)`);

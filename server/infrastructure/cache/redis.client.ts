@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import { env } from '../../config/env.config.js';
 
 let redisClient: Redis | null = null;
@@ -11,7 +11,7 @@ try {
     password: env.REDIS_PASSWORD || undefined,
     lazyConnect: true,
     maxRetriesPerRequest: 1,
-    retryStrategy: (times) => {
+    retryStrategy: (times: number) => {
       if (times > 3) {
         return null;
       }

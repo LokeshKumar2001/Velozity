@@ -18,7 +18,7 @@ export class TasksController {
 
   getTaskById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const task = await this.service.getTaskById(req.params.id, req.user!);
+      const task = await this.service.getTaskById(req.params.id as string, req.user!);
       res.status(200).json({
         success: true,
         data: task,
@@ -43,7 +43,7 @@ export class TasksController {
 
   updateTask = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const task = await this.service.updateTask(req.params.id, req.body, req.user!);
+      const task = await this.service.updateTask(req.params.id as string, req.body, req.user!);
       res.status(200).json({
         success: true,
         message: 'Task updated successfully',
@@ -56,7 +56,7 @@ export class TasksController {
 
   updateTaskStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const task = await this.service.updateTaskStatus(req.params.id, req.body, req.user!);
+      const task = await this.service.updateTaskStatus(req.params.id as string, req.body, req.user!);
       res.status(200).json({
         success: true,
         message: 'Task status updated successfully',
@@ -69,7 +69,7 @@ export class TasksController {
 
   deleteTask = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      await this.service.deleteTask(req.params.id, req.user!);
+      await this.service.deleteTask(req.params.id as string, req.user!);
       res.status(200).json({
         success: true,
         message: 'Task deleted successfully',

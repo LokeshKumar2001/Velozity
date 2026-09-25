@@ -18,7 +18,7 @@ export class UsersController {
 
   getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const user = await this.service.getUserById(req.params.id);
+      const user = await this.service.getUserById(req.params.id as string);
       res.status(200).json({
         success: true,
         data: user,
