@@ -10,12 +10,10 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ): void => {
-  // If response has already started streaming, delegate to default Express handler
   if (res.headersSent) {
     return next(err);
   }
 
-  // Handle Zod validation errors
   if (err instanceof ZodError) {
     const formattedErrors = err.issues.map((issue) => ({
       field: issue.path.join('.'),
@@ -33,7 +31,6 @@ export const errorHandler = (
     return;
   }
 
-  // Handle known AppError instances
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       success: false,
@@ -46,15 +43,13 @@ export const errorHandler = (
     return;
   }
 
-  // Handle unhandled unexpected runtime exceptions
-  console.error('💥 Unhandled Exception:', err);
+  console.error('[error-handler] Unhandled Exception:', err);
 
   res.status(500).json({
     success: false,
     error: {
       code: ErrorCode.INTERNAL_SERVER_ERROR,
       message: 'An unexpected internal error occurred. Please try again later.',
-      // Never expose raw stack traces in production
       details: env.NODE_ENV === 'development' ? err.message : null,
     },
   });

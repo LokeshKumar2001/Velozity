@@ -36,7 +36,6 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  // Relationships
   refreshTokens   RefreshToken[]
   managedProjects Project[]      @relation("ProjectManager")
   assignedTasks   Task[]         @relation("AssignedDeveloper")
@@ -53,7 +52,6 @@ model Client {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 
-  // Relationships
   projects Project[]
 
   @@map("clients")
@@ -68,7 +66,6 @@ model Project {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  // Relationships
   client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   manager      User          @relation("ProjectManager", fields: [managerId], references: [id], onDelete: Restrict)
   tasks        Task[]
@@ -92,7 +89,6 @@ model Task {
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
-  // Relationships
   project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   developer     User?          @relation("AssignedDeveloper", fields: [assignedTo], references: [id], onDelete: SetNull)
   activityLogs  ActivityLog[]
@@ -114,7 +110,6 @@ model RefreshToken {
   revokedAt DateTime? @map("revoked_at")
   createdAt DateTime  @default(now()) @map("created_at")
 
-  // Relationships
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -133,7 +128,6 @@ model ActivityLog {
   metadata  Json?
   createdAt DateTime    @default(now()) @map("created_at")
 
-  // Relationships
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   task    Task?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -153,7 +147,6 @@ model Notification {
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
 
-  // Relationships
   user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   task Task? @relation(fields: [taskId], references: [id], onDelete: Cascade)
 

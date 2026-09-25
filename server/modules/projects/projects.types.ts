@@ -2,7 +2,7 @@ export interface CreateProjectDTO {
   name: string;
   description?: string;
   clientId: string;
-  managerId?: string; // If Admin creates, can specify PM, else defaults to current user
+  managerId?: string;
 }
 
 export interface UpdateProjectDTO {

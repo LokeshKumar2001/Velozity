@@ -124,7 +124,6 @@ router.get('/metrics', async (req: Request, res: Response, next: NextFunction) =
       return;
     }
 
-    // DEVELOPER Dashboard
     const assignedTasks = await prisma.task.findMany({
       where: { assignedTo: user.id },
       include: {

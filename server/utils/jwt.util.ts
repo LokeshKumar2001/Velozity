@@ -24,10 +24,9 @@ export const generateAccessToken = (user: AuthUser): string => {
 };
 
 export const generateRefreshToken = (userId: string): { token: string; hash: string; expiresAt: Date } => {
-  // Generate random cryptographic string for refresh token
   const token = crypto.randomBytes(40).toString('hex');
   const hash = hashToken(token);
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   return { token, hash, expiresAt };
 };

@@ -11,8 +11,8 @@ interface RateLimitStore {
 const store: RateLimitStore = {};
 
 export const rateLimiter = (options: { windowMs?: number; max?: number } = {}) => {
-  const windowMs = options.windowMs || 15 * 60 * 1000; // 15 minutes
-  const max = options.max || 100; // 100 requests per window
+  const windowMs = options.windowMs || 15 * 60 * 1000;
+  const max = options.max || 100;
 
   return (req: Request, res: Response, next: NextFunction): void => {
     const ip = req.ip || req.socket.remoteAddress || 'unknown-ip';
