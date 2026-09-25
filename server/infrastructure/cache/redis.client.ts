@@ -13,7 +13,7 @@ try {
     maxRetriesPerRequest: 1,
     retryStrategy: (times) => {
       if (times > 3) {
-        return null; // Stop retrying after 3 attempts
+        return null;
       }
       return Math.min(times * 100, 1000);
     },
@@ -21,20 +21,18 @@ try {
 
   redisClient.on('connect', () => {
     isRedisConnected = true;
-    console.log('✅ Connected to Redis successfully');
+    console.log('[redis] connected');
   });
 
-  redisClient.on('error', (err) => {
+  redisClient.on('error', () => {
     isRedisConnected = false;
-    // Suppress repeated spam if Redis is offline during local dev
   });
 
-  // Attempt connection asynchronously
   redisClient.connect().catch(() => {
-    console.log('ℹ️ Redis server not reachable locally. Utilizing fallback mechanisms.');
+    console.log('[redis] offline, continuing with fallback');
   });
 } catch (error) {
-  console.log('ℹ️ Redis initialization skipped.');
+  console.log('[redis] connection skipped');
 }
 
 export const getRedisClient = (): Redis | null => redisClient;

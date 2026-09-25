@@ -5,7 +5,6 @@ export const processOverdueTasks = async (): Promise<number> => {
   try {
     const now = new Date();
 
-    // Query tasks that have crossed due date and are not done and not yet flagged
     const overdueTasks = await prisma.task.findMany({
       where: {
         dueDate: { lt: now },
@@ -26,21 +25,19 @@ export const processOverdueTasks = async (): Promise<number> => {
       return 0;
     }
 
-    console.log(`⏰ Found ${overdueTasks.length} newly overdue tasks. Flagging...`);
+    console.log(`[scheduler] Found ${overdueTasks.length} overdue tasks to update`);
 
     for (const task of overdueTasks) {
-      // 1. Mark task as overdue
       const updatedTask = await prisma.task.update({
         where: { id: task.id },
         data: { isOverdue: true },
       });
 
-      // 2. Create activity log
       const activity = await prisma.activityLog.create({
         data: {
           projectId: task.projectId,
           taskId: task.id,
-          userId: task.project.managerId, // Flagged under project management
+          userId: task.project.managerId,
           action: 'TASK_FLAGGED_OVERDUE',
           oldStatus: task.status,
           newStatus: task.status,
@@ -52,7 +49,6 @@ export const processOverdueTasks = async (): Promise<number> => {
         },
       });
 
-      // 3. Send notification to assigned Developer if assigned
       if (task.assignedTo) {
         const notif = await prisma.notification.create({
           data: {
@@ -74,7 +70,6 @@ export const processOverdueTasks = async (): Promise<number> => {
         });
       }
 
-      // 4. Send notification to Project Manager
       const pmNotif = await prisma.notification.create({
         data: {
           userId: task.project.managerId,
@@ -94,7 +89,6 @@ export const processOverdueTasks = async (): Promise<number> => {
         createdAt: pmNotif.createdAt.toISOString(),
       });
 
-      // 5. Broadcast real-time activity and task update
       broadcastActivity(
         {
           id: activity.id,
@@ -117,7 +111,7 @@ export const processOverdueTasks = async (): Promise<number> => {
 
     return overdueTasks.length;
   } catch (error) {
-    console.error('❌ Error executing processOverdueTasks:', error);
+    console.error('Failed to process overdue tasks:', error);
     return 0;
   }
 };

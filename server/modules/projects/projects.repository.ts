@@ -6,7 +6,6 @@ export class ProjectsRepository {
   async findAll(filters: ProjectFilterQuery, userRole: string, userId: string) {
     const where: Prisma.ProjectWhereInput = {};
 
-    // 1. Enforce strict role boundary scoping
     if (userRole === 'PROJECT_MANAGER') {
       where.managerId = userId;
     } else if (userRole === 'DEVELOPER') {
@@ -15,7 +14,6 @@ export class ProjectsRepository {
       };
     }
 
-    // 2. Apply search and client filter
     if (filters.clientId) {
       where.clientId = filters.clientId;
     }

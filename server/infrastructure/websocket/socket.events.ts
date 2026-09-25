@@ -1,15 +1,12 @@
 export enum SocketEvent {
-  // Connection & Presence
   PRESENCE_UPDATE = 'presence:update',
   USER_ONLINE = 'user:online',
   USER_OFFLINE = 'user:offline',
 
-  // Real-time Activity
   ACTIVITY_NEW = 'activity:new',
   TASK_UPDATED = 'task:updated',
   TASK_CREATED = 'task:created',
 
-  // Notifications
   NOTIFICATION_NEW = 'notification:new',
   NOTIFICATION_READ = 'notification:read',
 }

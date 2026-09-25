@@ -7,9 +7,7 @@ export interface OnlineUser {
 }
 
 export class PresenceManager {
-  // Map of userId -> Set of socket IDs (handles multiple browser tabs)
   private userSockets: Map<string, Set<string>> = new Map();
-  // Map of userId -> User metadata
   private users: Map<string, OnlineUser> = new Map();
 
   addUser(socketId: string, user: { userId: string; name: string; email: string; role: string }): boolean {
@@ -28,7 +26,7 @@ export class PresenceManager {
       this.userSockets.get(user.userId)!.add(socketId);
     }
 
-    return isFirstConnection; // true if transitioned from offline -> online
+    return isFirstConnection;
   }
 
   removeUser(socketId: string, userId: string): boolean {
@@ -40,7 +38,7 @@ export class PresenceManager {
     if (sockets.size === 0) {
       this.userSockets.delete(userId);
       this.users.delete(userId);
-      return true; // true if transitioned from online -> offline
+      return true;
     }
 
     return false;

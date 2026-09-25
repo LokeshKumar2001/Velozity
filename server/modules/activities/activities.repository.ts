@@ -7,7 +7,6 @@ export class ActivitiesRepository {
     const where: Prisma.ActivityLogWhereInput = {};
     const limit = filters.limit ? Math.min(parseInt(filters.limit, 10), 100) : 20;
 
-    // 1. Role-based scoping
     if (userRole === 'ADMIN') {
       if (filters.projectId) {
         where.projectId = filters.projectId;
@@ -20,7 +19,6 @@ export class ActivitiesRepository {
         where.projectId = filters.projectId;
       }
     } else if (userRole === 'DEVELOPER') {
-      // Developer sees activity only on tasks assigned to them
       where.task = {
         assignedTo: userId,
       };

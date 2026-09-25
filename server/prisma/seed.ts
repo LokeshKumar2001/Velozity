@@ -4,9 +4,8 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  console.log('Seeding database...');
 
-  // 1. Clean existing records in reverse dependency order
   await prisma.notification.deleteMany();
   await prisma.activityLog.deleteMany();
   await prisma.refreshToken.deleteMany();
@@ -17,7 +16,7 @@ async function main() {
 
   const defaultPasswordHash = await bcrypt.hash('Password@123', 10);
 
-  // 2. Create Users: 1 Admin, 2 PMs, 4 Developers
+  // 1. Users
   const admin = await prisma.user.create({
     data: {
       name: 'Sarah Connor',
@@ -81,9 +80,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Created 7 users (1 Admin, 2 PMs, 4 Developers)');
-
-  // 3. Create Clients
+  // 2. Clients
   const clientAcme = await prisma.client.create({
     data: {
       name: 'Acme Corp',
@@ -105,13 +102,11 @@ async function main() {
     },
   });
 
-  console.log('✅ Created 3 clients');
-
-  // 4. Create Projects
+  // 3. Projects
   const projectEcommerce = await prisma.project.create({
     data: {
       name: 'E-commerce Platform',
-      description: 'Full-stack multi-vendor online commerce solution with live payment processing and inventory tracking.',
+      description: 'Multi-vendor store with payment processing and stock management.',
       clientId: clientAcme.id,
       managerId: pmPriya.id,
     },
@@ -120,7 +115,7 @@ async function main() {
   const projectMobileApp = await prisma.project.create({
     data: {
       name: 'Mobile App Redesign',
-      description: 'Next-generation iOS and Android cross-platform mobile experience with modern typography and animations.',
+      description: 'Cross-platform app redesign with revised navigation and theming.',
       clientId: clientGlobex.id,
       managerId: pmRahul.id,
     },
@@ -129,27 +124,24 @@ async function main() {
   const projectCRM = await prisma.project.create({
     data: {
       name: 'CRM System',
-      description: 'Enterprise pipeline tracking, contact lifecycle management, and revenue analytics for sales teams.',
+      description: 'Sales pipeline and lead tracking system.',
       clientId: clientNextGen.id,
       managerId: pmRahul.id,
     },
   });
 
-  console.log('✅ Created 3 projects with assigned Project Managers');
-
-  const now = new Date();
-  const pastDate1 = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000); // 3 days ago (overdue)
-  const pastDate2 = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // 5 days ago (overdue)
+  const pastDate1 = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const pastDate2 = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
   const futureDate1 = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
   const futureDate2 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const futureDate3 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-  // 5. Create Tasks for Project 1: E-commerce Platform (6 tasks)
+  // 4. Tasks - E-commerce Platform
   const task1 = await prisma.task.create({
     data: {
       projectId: projectEcommerce.id,
       title: 'API Integration',
-      description: 'Integrate payment gateway with the existing system. Handle success, webhook events, and failure cases.',
+      description: 'Hook up payment provider webhook handlers and verify edge failure states.',
       assignedTo: devRavi.id,
       status: TaskStatus.IN_PROGRESS,
       priority: TaskPriority.HIGH,
@@ -162,7 +154,7 @@ async function main() {
     data: {
       projectId: projectEcommerce.id,
       title: 'Payment gateway',
-      description: 'Implement Stripe and PayPal checkout flows with 3D Secure verification.',
+      description: 'Integrate checkout redirect and 3D Secure callbacks.',
       assignedTo: devRavi.id,
       status: TaskStatus.IN_REVIEW,
       priority: TaskPriority.CRITICAL,
@@ -175,11 +167,11 @@ async function main() {
     data: {
       projectId: projectEcommerce.id,
       title: 'Fix responsive layout in checkout',
-      description: 'Mobile responsive styling fixes on smaller viewports (iOS Safari & Android Chrome).',
+      description: 'Layout bugs reported on mobile viewports.',
       assignedTo: devSneha.id,
       status: TaskStatus.TODO,
       priority: TaskPriority.HIGH,
-      dueDate: pastDate1, // OVERDUE TASK 1
+      dueDate: pastDate1,
       isOverdue: true,
     },
   });
@@ -188,7 +180,7 @@ async function main() {
     data: {
       projectId: projectEcommerce.id,
       title: 'Product catalog caching',
-      description: 'Cache frequently accessed categories and product listings in Redis with 10-minute TTL.',
+      description: 'Cache high-traffic category listing endpoints.',
       assignedTo: devVikram.id,
       status: TaskStatus.IN_PROGRESS,
       priority: TaskPriority.MEDIUM,
@@ -201,7 +193,7 @@ async function main() {
     data: {
       projectId: projectEcommerce.id,
       title: 'Project setup & DB migrations',
-      description: 'Initial PostgreSQL relational schema setup with Prisma ORM and seed configs.',
+      description: 'Baseline schema setup and initial seed configuration.',
       assignedTo: devAlex.id,
       status: TaskStatus.DONE,
       priority: TaskPriority.LOW,
@@ -214,7 +206,7 @@ async function main() {
     data: {
       projectId: projectEcommerce.id,
       title: 'Order confirmation email templates',
-      description: 'Create responsive HTML email templates with dynamic order items and tax breakdowns.',
+      description: 'Email receipt templates with tax breakdowns.',
       assignedTo: devSneha.id,
       status: TaskStatus.TODO,
       priority: TaskPriority.LOW,
@@ -223,12 +215,12 @@ async function main() {
     },
   });
 
-  // 6. Create Tasks for Project 2: Mobile App Redesign (6 tasks)
+  // Tasks - Mobile App Redesign
   const task7 = await prisma.task.create({
     data: {
       projectId: projectMobileApp.id,
       title: 'Design login page',
-      description: 'Implement dark navy theme, smooth micro-animations, and form validation for authentication.',
+      description: 'Theme updates and form validation.',
       assignedTo: devAlex.id,
       status: TaskStatus.TODO,
       priority: TaskPriority.HIGH,
@@ -241,7 +233,7 @@ async function main() {
     data: {
       projectId: projectMobileApp.id,
       title: 'UI components library',
-      description: 'Build reusable UI tokens, buttons, inputs, modals, and badge components.',
+      description: 'Reusable buttons, inputs, modals, and badge components.',
       assignedTo: devVikram.id,
       status: TaskStatus.IN_PROGRESS,
       priority: TaskPriority.MEDIUM,
@@ -254,11 +246,11 @@ async function main() {
     data: {
       projectId: projectMobileApp.id,
       title: 'Push notification integration',
-      description: 'Configure APNS and FCM push notification certificates and background handlers.',
+      description: 'Push notification credentials and background token handlers.',
       assignedTo: devRavi.id,
       status: TaskStatus.TODO,
       priority: TaskPriority.CRITICAL,
-      dueDate: pastDate2, // OVERDUE TASK 2
+      dueDate: pastDate2,
       isOverdue: true,
     },
   });
@@ -266,8 +258,8 @@ async function main() {
   const task10 = await prisma.task.create({
     data: {
       projectId: projectMobileApp.id,
-      title: 'Biometric authentication (FaceID & Fingerprint)',
-      description: 'Support local authentication fallback for secure token retrieval.',
+      title: 'Biometric authentication fallback',
+      description: 'FaceID and fingerprint unlock for session token retrieval.',
       assignedTo: devAlex.id,
       status: TaskStatus.IN_REVIEW,
       priority: TaskPriority.HIGH,
@@ -280,7 +272,7 @@ async function main() {
     data: {
       projectId: projectMobileApp.id,
       title: 'Landing page onboarding tour',
-      description: 'Multi-step carousel onboarding walkthrough explaining core capabilities.',
+      description: 'Product walkthrough for first-time signups.',
       assignedTo: devSneha.id,
       status: TaskStatus.DONE,
       priority: TaskPriority.LOW,
@@ -293,7 +285,7 @@ async function main() {
     data: {
       projectId: projectMobileApp.id,
       title: 'Deep linking configuration',
-      description: 'Universal links configuration on iOS and Android intent filters for shared URLs.',
+      description: 'App link routing for incoming share links.',
       assignedTo: devVikram.id,
       status: TaskStatus.IN_PROGRESS,
       priority: TaskPriority.MEDIUM,
@@ -302,12 +294,12 @@ async function main() {
     },
   });
 
-  // 7. Create Tasks for Project 3: CRM System (6 tasks)
+  // Tasks - CRM System
   const task13 = await prisma.task.create({
     data: {
       projectId: projectCRM.id,
       title: 'Build user authentication',
-      description: 'JWT token pairs with HttpOnly cookie refresh token rotation and role-based guard middleware.',
+      description: 'JWT token pair with refresh cookies and role guards.',
       assignedTo: devRavi.id,
       status: TaskStatus.IN_PROGRESS,
       priority: TaskPriority.HIGH,
@@ -320,7 +312,7 @@ async function main() {
     data: {
       projectId: projectCRM.id,
       title: 'Database optimization & indexing',
-      description: 'Analyze slow queries and create composite indexes on activity_logs and notifications.',
+      description: 'Indexes on activity_logs and notifications.',
       assignedTo: devVikram.id,
       status: TaskStatus.IN_PROGRESS,
       priority: TaskPriority.MEDIUM,
@@ -333,7 +325,7 @@ async function main() {
     data: {
       projectId: projectCRM.id,
       title: 'Bug fixes in lead export',
-      description: 'Resolve memory leak in CSV export stream for large customer datasets.',
+      description: 'Fix stream buffering in CSV export.',
       assignedTo: devSneha.id,
       status: TaskStatus.TODO,
       priority: TaskPriority.HIGH,
@@ -345,8 +337,8 @@ async function main() {
   const task16 = await prisma.task.create({
     data: {
       projectId: projectCRM.id,
-      title: 'Performance testing with k6',
-      description: 'Benchmark real-time WebSocket connection handling under 1,000 concurrent client loads.',
+      title: 'Performance testing',
+      description: 'Benchmarking socket connection throughput under concurrency.',
       assignedTo: devAlex.id,
       status: TaskStatus.IN_REVIEW,
       priority: TaskPriority.MEDIUM,
@@ -358,8 +350,8 @@ async function main() {
   const task17 = await prisma.task.create({
     data: {
       projectId: projectCRM.id,
-      title: 'API documentation & Swagger OpenAPI',
-      description: 'Comprehensive endpoint documentation with response schemas and status code examples.',
+      title: 'API documentation & Swagger setup',
+      description: 'Endpoint definitions and status codes.',
       assignedTo: devRavi.id,
       status: TaskStatus.DONE,
       priority: TaskPriority.LOW,
@@ -372,7 +364,7 @@ async function main() {
     data: {
       projectId: projectCRM.id,
       title: 'Audit logging middleware',
-      description: 'Capture all resource mutations with actor ID, timestamp, and before/after state diffs.',
+      description: 'Audit trail for status and role updates.',
       assignedTo: devVikram.id,
       status: TaskStatus.TODO,
       priority: TaskPriority.MEDIUM,
@@ -381,9 +373,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Created 18 tasks across 3 projects (including 2 intentionally overdue tasks)');
-
-  // 8. Create Pre-existing Activity Logs
+  // 5. Activity logs
   const logEntries = [
     {
       projectId: projectEcommerce.id,
@@ -393,7 +383,7 @@ async function main() {
       oldStatus: TaskStatus.IN_PROGRESS,
       newStatus: TaskStatus.IN_REVIEW,
       metadata: { taskTitle: task2.title, message: 'Ravi moved Task #2 from In Progress → In Review' },
-      createdAt: new Date(Date.now() - 2 * 60 * 1000), // 2 mins ago
+      createdAt: new Date(Date.now() - 2 * 60 * 1000),
     },
     {
       projectId: projectEcommerce.id,
@@ -403,7 +393,7 @@ async function main() {
       oldStatus: null,
       newStatus: null,
       metadata: { projectTitle: projectEcommerce.name, message: "Priya created a new project 'E-commerce Platform'" },
-      createdAt: new Date(Date.now() - 12 * 60 * 1000), // 12 mins ago
+      createdAt: new Date(Date.now() - 12 * 60 * 1000),
     },
     {
       projectId: projectMobileApp.id,
@@ -413,7 +403,7 @@ async function main() {
       oldStatus: null,
       newStatus: null,
       metadata: { taskTitle: task8.title, assigneeName: 'Vikram Patel', message: 'Vikram was assigned to Task #8' },
-      createdAt: new Date(Date.now() - 25 * 60 * 1000), // 25 mins ago
+      createdAt: new Date(Date.now() - 25 * 60 * 1000),
     },
     {
       projectId: projectCRM.id,
@@ -423,7 +413,7 @@ async function main() {
       oldStatus: null,
       newStatus: null,
       metadata: { taskTitle: task15.title, message: 'Sneha commented on Task #15' },
-      createdAt: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
+      createdAt: new Date(Date.now() - 60 * 60 * 1000),
     },
     {
       projectId: projectEcommerce.id,
@@ -433,7 +423,7 @@ async function main() {
       oldStatus: TaskStatus.IN_REVIEW,
       newStatus: TaskStatus.DONE,
       metadata: { taskTitle: task5.title, message: 'Alex updated Task #5 status to Done' },
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
     },
     {
       projectId: projectMobileApp.id,
@@ -443,7 +433,7 @@ async function main() {
       oldStatus: null,
       newStatus: null,
       metadata: { clientName: 'NextGen Ltd', message: "Admin created a new client 'NextGen Ltd'" },
-      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
     },
   ];
 
@@ -451,9 +441,7 @@ async function main() {
     await prisma.activityLog.create({ data: entry });
   }
 
-  console.log('✅ Created 6 pre-existing activity log entries');
-
-  // 9. Create Pre-existing Notifications
+  // 6. Notifications
   const notifications = [
     {
       userId: devRavi.id,
@@ -491,7 +479,7 @@ async function main() {
       userId: admin.id,
       taskId: null,
       type: 'SYSTEM_ALERT',
-      message: 'Automated background task inspection completed successfully.',
+      message: 'Background scheduler completed task inspection.',
       isRead: true,
       createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
     },
@@ -501,13 +489,12 @@ async function main() {
     await prisma.notification.create({ data: notif });
   }
 
-  console.log('✅ Created 5 sample notifications');
-  console.log('🎉 Database seeding completed successfully!');
+  console.log('Seed completed successfully.');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seeding failed:', e);
+    console.error('Seeding failed:', e);
     process.exit(1);
   })
   .finally(async () => {

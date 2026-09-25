@@ -11,12 +11,10 @@ let intervalTimer: NodeJS.Timeout | null = null;
 export const initQueueManager = async (): Promise<void> => {
   const intervalMs = (env.OVERDUE_JOB_INTERVAL_MINUTES || 5) * 60 * 1000;
 
-  // Run initial overdue check upon server boot
   processOverdueTasks().catch((err) => console.error('Initial overdue check error:', err));
 
   if (isRedisAvailable()) {
     try {
-      console.log('🚀 Initializing BullMQ Overdue Task Queue with Redis...');
       overdueQueue = new Queue('overdue-task-queue', {
         connection: redisConfig,
       });
@@ -31,7 +29,6 @@ export const initQueueManager = async (): Promise<void> => {
         { connection: redisConfig }
       );
 
-      // Add repeatable job
       await overdueQueue.add(
         'check-overdue',
         {},
@@ -44,15 +41,14 @@ export const initQueueManager = async (): Promise<void> => {
         }
       );
 
-      console.log(`✅ BullMQ repeatable overdue scheduler active (every ${env.OVERDUE_JOB_INTERVAL_MINUTES} mins)`);
+      console.log(`[scheduler] BullMQ overdue scheduler active (interval: ${env.OVERDUE_JOB_INTERVAL_MINUTES}m)`);
       return;
     } catch (error) {
-      console.warn('⚠️ BullMQ setup failed. Falling back to background interval timer:', error);
+      console.warn('[scheduler] BullMQ initialization failed, switching to interval timer:', error);
     }
   }
 
-  // Fallback: Recurring background interval timer
-  console.log(`⏰ Starting resilient background scheduler timer (every ${env.OVERDUE_JOB_INTERVAL_MINUTES} mins)`);
+  console.log(`[scheduler] Interval timer active (interval: ${env.OVERDUE_JOB_INTERVAL_MINUTES}m)`);
   intervalTimer = setInterval(async () => {
     await processOverdueTasks();
   }, intervalMs);

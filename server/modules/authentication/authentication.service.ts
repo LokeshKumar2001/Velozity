@@ -28,7 +28,6 @@ export class AuthenticationService {
     const accessToken = generateAccessToken(authUser);
     const { token: rawRefreshToken, hash, expiresAt } = generateRefreshToken(user.id);
 
-    // Save hashed refresh token to DB
     await this.repo.saveRefreshToken(user.id, hash, expiresAt);
 
     return {
@@ -53,7 +52,6 @@ export class AuthenticationService {
       throw AppError.unauthenticated('Invalid or expired refresh token. Please sign in again.');
     }
 
-    // Token Rotation: Invalidate used token immediately
     await this.repo.revokeRefreshToken(currentHash);
 
     const user = storedToken.user;

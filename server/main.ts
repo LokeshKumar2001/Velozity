@@ -10,29 +10,19 @@ const startServer = async () => {
     const app = createApp();
     const httpServer = createServer(app);
 
-    // Initialize Real-time WebSocket Engine
     initSocketServer(httpServer);
-
-    // Initialize Background Job Queue Manager
     await initQueueManager();
 
     httpServer.listen(env.PORT, () => {
-      console.log('====================================================');
-      console.log(`🚀 Velozity Server listening on port ${env.PORT}`);
-      console.log(`📡 Environment: ${env.NODE_ENV}`);
-      console.log(`📚 Swagger Docs: http://localhost:${env.PORT}/api/docs`);
-      console.log(`⚡ WebSocket Engine: Initialized`);
-      console.log('====================================================');
+      console.log(`Server listening on port ${env.PORT} (${env.NODE_ENV})`);
+      console.log(`API docs available at http://localhost:${env.PORT}/api/docs`);
     });
 
-    // Graceful Shutdown
     const shutdown = async (signal: string) => {
-      console.log(`\n🛑 Received ${signal}. Gracefully shutting down...`);
+      console.log(`Shutting down (${signal})...`);
       httpServer.close(async () => {
-        console.log('🔒 HTTP server closed');
         await shutdownQueueManager();
         await prisma.$disconnect();
-        console.log('📦 Database connections closed');
         process.exit(0);
       });
     };
@@ -40,7 +30,7 @@ const startServer = async () => {
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('SIGINT', () => shutdown('SIGINT'));
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 };

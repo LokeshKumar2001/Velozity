@@ -9,7 +9,6 @@ export class AuthenticationController {
     try {
       const { authResponse, rawRefreshToken, refreshExpiresAt } = await this.service.login(req.body);
 
-      // Set Refresh Token strictly in HttpOnly cookie
       res.cookie('refreshToken', rawRefreshToken, {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',

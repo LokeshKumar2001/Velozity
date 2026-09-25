@@ -6,7 +6,6 @@ export class TasksRepository {
   async findAll(filters: TaskFilterQuery, userRole: string, userId: string) {
     const where: Prisma.TaskWhereInput = {};
 
-    // 1. Strict Role Boundaries
     if (userRole === 'DEVELOPER') {
       where.assignedTo = userId;
     } else if (userRole === 'PROJECT_MANAGER') {
@@ -15,7 +14,6 @@ export class TasksRepository {
       };
     }
 
-    // 2. Query Filters (Shareable as URLs)
     if (filters.projectId) {
       where.projectId = filters.projectId;
     }

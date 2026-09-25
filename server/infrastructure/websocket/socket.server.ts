@@ -19,7 +19,6 @@ export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
     pingTimeout: 20000,
   });
 
-  // Enforce JWT handshake authentication
   io.use(socketAuthMiddleware);
 
   io.on('connection', async (socket: Socket) => {
@@ -29,16 +28,13 @@ export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
       return;
     }
 
-    console.log(`🔌 Socket connected: ${user.name} (${user.role}) [socket: ${socket.id}]`);
+    console.log(`Socket connected: ${user.name} (${user.role}) [${socket.id}]`);
 
-    // 1. Join private user room for direct alerts and assigned task events
     socket.join(`user:${user.userId}`);
 
-    // 2. Role-based initial room subscriptions
     if (user.role === 'ADMIN') {
       socket.join('global:admin');
     } else if (user.role === 'PROJECT_MANAGER') {
-      // Auto-join rooms for projects managed by this PM
       try {
         const managedProjects = await prisma.project.findMany({
           where: { managerId: user.userId },
@@ -50,7 +46,6 @@ export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
       }
     }
 
-    // 3. Register user presence
     const becameOnline = presenceManager.addUser(socket.id, user);
     if (becameOnline) {
       io?.emit(SocketEvent.USER_ONLINE, {
@@ -60,12 +55,9 @@ export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
       });
     }
 
-    // Broadcast current presence count to Admins
     broadcastPresence();
 
-    // 4. Handle dynamic client subscriptions (e.g. user opens a project board)
     socket.on('project:join', async (projectId: string) => {
-      // Security check: ensure user has permission to view this project
       try {
         if (user.role === 'ADMIN') {
           socket.join(`project:${projectId}`);
@@ -78,7 +70,6 @@ export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
             socket.join(`project:${projectId}`);
           }
         } else if (user.role === 'DEVELOPER') {
-          // Dev can join if they have at least one task assigned in the project
           const hasTask = await prisma.task.findFirst({
             where: { projectId, assignedTo: user.userId },
             select: { id: true },
@@ -96,7 +87,6 @@ export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
       socket.leave(`project:${projectId}`);
     });
 
-    // 5. Handle Disconnect
     socket.on('disconnect', () => {
       const becameOffline = presenceManager.removeUser(socket.id, user.userId);
       if (becameOffline) {
@@ -106,7 +96,7 @@ export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
         });
       }
       broadcastPresence();
-      console.log(`🔌 Socket disconnected: ${user.name}`);
+      console.log(`Socket disconnected: ${user.name}`);
     });
   });
 
@@ -118,26 +108,20 @@ export const broadcastPresence = (): void => {
   const count = presenceManager.getOnlineCount();
   const onlineUsers = presenceManager.getOnlineUsers();
 
-  // Admins see the full presence roster and count
   io.to('global:admin').emit(SocketEvent.PRESENCE_UPDATE, {
     count,
     onlineUsers,
   });
 
-  // Standard broadcast for dashboard counter
   io.emit('presence:count', { count });
 };
 
 export const broadcastActivity = (activity: ActivityPayload, assignedToUserId?: string | null): void => {
   if (!io) return;
 
-  // 1. Admin receives all activities globally
   io.to('global:admin').emit(SocketEvent.ACTIVITY_NEW, activity);
-
-  // 2. Active viewers and PMs of this project receive the event
   io.to(`project:${activity.projectId}`).emit(SocketEvent.ACTIVITY_NEW, activity);
 
-  // 3. Assigned developer receives it in their private channel
   if (assignedToUserId && assignedToUserId !== activity.userId) {
     io.to(`user:${assignedToUserId}`).emit(SocketEvent.ACTIVITY_NEW, activity);
   }

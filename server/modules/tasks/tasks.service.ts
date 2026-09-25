@@ -19,7 +19,6 @@ export class TasksService {
       throw AppError.notFound('Task not found');
     }
 
-    // Role-based authorization guard
     if (user.role === 'DEVELOPER' && task.assignedTo !== user.id) {
       throw AppError.forbidden('You do not have permission to view this task');
     }
@@ -32,12 +31,10 @@ export class TasksService {
   }
 
   async createTask(dto: CreateTaskDTO, user: AuthUser) {
-    // Only Admin and Project Manager can create tasks
     if (user.role === 'DEVELOPER') {
       throw AppError.forbidden('Developers cannot create tasks');
     }
 
-    // Verify project exists and belongs to PM if not Admin
     const project = await prisma.project.findUnique({
       where: { id: dto.projectId },
     });
@@ -49,7 +46,6 @@ export class TasksService {
       throw AppError.forbidden('You can only create tasks in projects you manage');
     }
 
-    // If assigned to a developer, verify developer exists
     let developer = null;
     if (dto.assignedTo) {
       developer = await prisma.user.findUnique({
@@ -62,7 +58,6 @@ export class TasksService {
 
     const task = await this.repo.create(dto);
 
-    // 1. Record activity log
     const activity = await prisma.activityLog.create({
       data: {
         projectId: task.projectId,
@@ -79,7 +74,6 @@ export class TasksService {
       },
     });
 
-    // 2. Send notification to assigned Developer if assigned
     if (task.assignedTo) {
       const notif = await prisma.notification.create({
         data: {
@@ -101,7 +95,6 @@ export class TasksService {
       });
     }
 
-    // 3. Broadcast real-time activity and task creation
     broadcastActivity(
       {
         id: activity.id,
@@ -129,7 +122,6 @@ export class TasksService {
       throw AppError.notFound('Task not found');
     }
 
-    // Role check: Only Admin or the project's PM can edit task properties
     if (user.role === 'PROJECT_MANAGER' && task.project.managerId !== user.id) {
       throw AppError.forbidden('You can only edit tasks in projects you manage');
     }
@@ -141,7 +133,6 @@ export class TasksService {
     const previousAssignee = task.assignedTo;
     const updated = await this.repo.update(id, dto);
 
-    // If assignment changed, notify the newly assigned developer
     if (dto.assignedTo && dto.assignedTo !== previousAssignee) {
       const notif = await prisma.notification.create({
         data: {
@@ -173,13 +164,10 @@ export class TasksService {
       throw AppError.notFound('Task not found');
     }
 
-    // Role verification:
-    // Developer can only update tasks assigned to them
     if (user.role === 'DEVELOPER' && task.assignedTo !== user.id) {
       throw AppError.forbidden('You can only update the status of tasks assigned to you');
     }
 
-    // PM can only update tasks in projects they manage
     if (user.role === 'PROJECT_MANAGER' && task.project.managerId !== user.id) {
       throw AppError.forbidden('You can only update tasks in projects you manage');
     }
@@ -191,10 +179,8 @@ export class TasksService {
       return task;
     }
 
-    // Update status in DB
     const updatedTask = await this.repo.updateStatus(id, newStatus);
 
-    // Format human-readable status name (e.g. IN_PROGRESS -> In Progress)
     const formatStatus = (s: string) =>
       s
         .split('_')
@@ -203,7 +189,6 @@ export class TasksService {
 
     const formattedMessage = `${user.name} moved '${task.title}' from ${formatStatus(oldStatus)} → ${formatStatus(newStatus)}`;
 
-    // 1. Record activity log in database (NOT derived, stored permanently)
     const activity = await prisma.activityLog.create({
       data: {
         projectId: task.projectId,
@@ -221,7 +206,6 @@ export class TasksService {
       },
     });
 
-    // 2. If moved to IN_REVIEW, notify the Project Manager
     if (newStatus === TaskStatus.IN_REVIEW) {
       const pmNotif = await prisma.notification.create({
         data: {
@@ -243,7 +227,6 @@ export class TasksService {
       });
     }
 
-    // 3. Broadcast real-time activity event across authorized rooms
     broadcastActivity(
       {
         id: activity.id,
@@ -261,7 +244,6 @@ export class TasksService {
       task.assignedTo
     );
 
-    // 4. Broadcast live task update so all users viewing that project see the board update
     broadcastTaskUpdate(task.projectId, updatedTask, task.assignedTo);
 
     return updatedTask;

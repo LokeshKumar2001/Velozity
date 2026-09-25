@@ -18,7 +18,6 @@ export class ProjectsService {
       throw AppError.notFound('Project not found');
     }
 
-    // Role-based visibility check
     if (user.role === 'PROJECT_MANAGER' && project.managerId !== user.id) {
       throw AppError.forbidden('You do not have access to view this project');
     }
@@ -34,10 +33,8 @@ export class ProjectsService {
   }
 
   async createProject(dto: CreateProjectDTO, user: AuthUser) {
-    // If PM creates, managerId is always their own id
     const managerId = user.role === 'PROJECT_MANAGER' ? user.id : dto.managerId || user.id;
 
-    // Verify client exists
     const client = await prisma.client.findUnique({
       where: { id: dto.clientId },
     });
@@ -50,7 +47,6 @@ export class ProjectsService {
       managerId,
     });
 
-    // Create activity log
     const activity = await prisma.activityLog.create({
       data: {
         projectId: project.id,
@@ -63,7 +59,6 @@ export class ProjectsService {
       },
     });
 
-    // Broadcast real-time activity
     broadcastActivity({
       id: activity.id,
       projectId: project.id,
@@ -85,7 +80,6 @@ export class ProjectsService {
       throw AppError.notFound('Project not found');
     }
 
-    // PM can only edit their own project
     if (user.role === 'PROJECT_MANAGER' && existing.managerId !== user.id) {
       throw AppError.forbidden('You can only edit projects you created');
     }
