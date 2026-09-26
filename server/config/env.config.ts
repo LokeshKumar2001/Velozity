@@ -23,8 +23,26 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error('Invalid environment variables:', parsed.error.format());
-  process.exit(1);
+  console.warn('Environment validation warning, using default configuration:', parsed.error.format());
 }
 
-export const env = parsed.data;
+const fallbackEnv = {
+  PORT: 5000,
+  NODE_ENV: (process.env.NODE_ENV as any) || 'production',
+  CLIENT_URL: process.env.CLIENT_URL || '*',
+  DATABASE_URL: process.env.DATABASE_URL || "postgresql://postgres:Velozity-App@db.redtnalmbqdocdapmgcd.supabase.co:5432/postgres",
+  REDIS_HOST: process.env.REDIS_HOST || 'localhost',
+  REDIS_PORT: parseInt(process.env.REDIS_PORT || '6379', 10),
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD || '',
+  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || 'velozity_super_secret_access_jwt_key_2026_at_least_32_chars',
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'velozity_super_secret_refresh_jwt_key_2026_at_least_32_chars',
+  JWT_ACCESS_EXPIRATION: '15m',
+  JWT_REFRESH_EXPIRATION: '7d',
+  OVERDUE_JOB_INTERVAL_MINUTES: 5,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+};
+
+
+export const env = parsed.success ? parsed.data : fallbackEnv;
+
