@@ -1,17 +1,10 @@
-# Velozity API — Real-Time Project Management Engine
+# Velozity Global Solutions — Real-Time Client Project Dashboard
 
-Backend API service for the Velozity project management dashboard. Built with Node.js, Express, TypeScript, PostgreSQL, Prisma ORM, Socket.io, and BullMQ background workers.
+Full-stack project management platform and real-time activity feed engine designed for agency workflows. Features role-based access control (Admin, Project Manager, Developer), live WebSocket event fanout with channel-level room segregation, background overdue task inspection with BullMQ, and a modern React 19 single-page application.
 
 ---
 
-## 🏗️ Architecture & Technology Stack
-
-- **Runtime & Language**: Node.js (v20+), TypeScript
-- **API Framework**: Express 5
-- **Database & ORM**: PostgreSQL with Prisma ORM
-- **Real-Time Layer**: Socket.io (with room-based permission segregation)
-- **Background Job Queue**: BullMQ on Redis (with automatic in-process interval fallback)
-- **Input Validation & API Spec**: Zod schemas, OpenAPI 3.0 / Swagger UI (`/api/docs`)
+## 🏗️ Architecture Overview
 
 ```
                            ┌───────────────────────────┐
@@ -36,50 +29,43 @@ Backend API service for the Velozity project management dashboard. Built with No
 
 ---
 
-## 🔐 Role-Based Access Control (RBAC)
+## 📁 Workspace Layout
 
-Role permissions are enforced server-side on every request via JWT claims and database entity ownership checks.
-
-| Action / Endpoint | Admin | Project Manager | Developer | Server-Side Enforcement |
-| :--- | :---: | :---: | :---: | :--- |
-| **User & Client Management** | Full | No | No | `requireRole('ADMIN')` |
-| **Create Projects** | Yes | Yes | No | `requireRole('ADMIN', 'PROJECT_MANAGER')` |
-| **Edit / Delete Projects** | Any | Owned projects only | No | Ownership check (`managerId === user.id`) |
-| **View Projects** | All | Owned projects | Projects with assigned tasks | Query level scoping |
-| **Create / Edit Tasks** | Yes | Owned projects only | No | Manager project ownership check |
-| **Update Task Status** | Yes | Owned projects | Assigned tasks only | Assignment check (`assignedTo === user.id`) |
-| **Global Activity Feed** | Yes | No | No | Joined `global:admin` socket room & DB query |
-| **Project Activity Feed** | All | Owned projects | No | Joined `project:{id}` room |
-| **Personal Task Alerts** | Yes | Yes | Yes | Joined `user:{id}` private socket room |
-| **Live Presence Count** | Full Roster | Count Only | Count Only | Presence manager socket broadcast |
-
----
-
-## 🗄️ Database Design & Indexes
-
-Relational PostgreSQL schema configured via Prisma ORM (`prisma/schema.prisma`). Key indexes optimize frequent query patterns:
-
-- `users(email)`: Unique index for $O(1)$ login lookups.
-- `projects(manager_id)`: Speeds up PM project filtering.
-- `tasks(project_id)`: Fast board queries per project.
-- `tasks(assigned_to)`: Optimizes developer task queries.
-- `tasks(status)` & `tasks(priority)`: Speeds up Kanban filter queries.
-- `tasks(due_date)`: Used by the overdue background worker (`due_date < NOW() AND status != 'DONE'`).
-- `activity_logs(project_id, created_at DESC)`: Reverse-chronological activity feed per project.
-- `activity_logs(user_id, created_at DESC)`: Fast offline catchup queries for missed events.
-- `notifications(user_id, is_read, created_at DESC)`: Fast unread notification listings and count aggregation.
+```
+Velozity/
+├── client/                     # Frontend Application (React 19 + Vite + Tailwind CSS)
+│   ├── src/
+│   │   ├── api/                # Axios instance & REST endpoints
+│   │   ├── components/         # Shared UI components & Shadcn primitives
+│   │   ├── pages/              # Route views (Login, Dashboard, Projects, Tasks, Activity, Users)
+│   │   ├── redux/              # Redux slices (auth, projects, tasks, notifications, dashboard)
+│   │   ├── hooks/              # Custom hooks (useSocket)
+│   │   └── types/              # TypeScript interfaces
+│   └── package.json
+│
+├── server/                     # Backend Application (Express 5 + TypeScript)
+│   ├── modules/                # Domain-Driven Architecture (auth, projects, tasks, users, clients)
+│   ├── infrastructure/         # BullMQ queue workers, Redis client, WebSocket server
+│   ├── prisma/                 # PostgreSQL schema, migrations, and seed scripts
+│   ├── middleware/             # RBAC auth, validation, rate limiting
+│   └── package.json
+│
+├── docker-compose.yml          # Container configuration for PostgreSQL & Redis
+├── pnpm-workspace.yaml         # Monorepo workspace configuration
+└── package.json                # Root orchestrator scripts
+```
 
 ---
 
-## ⚡ Architectural Decisions & Justifications
+## ⚡ Key Technical Decisions & Justifications
 
 ### 1. WebSockets (`Socket.io`) vs Native WebSockets / SSE
 - **Choice**: `Socket.io`
-- **Justification**: Socket.io provides out-of-the-box room abstraction (`socket.join`), automatic reconnection handling, heartbeat pinging, and fallback transports. Room segregation (`global:admin`, `project:{id}`, `user:{id}`) ensures that role permission boundaries are preserved during real-time broadcasts without leaking events client-side.
+- **Justification**: Socket.io provides room abstraction (`socket.join`), automatic reconnection handling, and heartbeat pinging. Room segregation (`global:admin`, `project:{id}`, `user:{id}`) ensures role permission boundaries are preserved during real-time broadcasts without leaking data to unauthorized clients.
 
 ### 2. Background Jobs: `BullMQ` vs `node-cron`
-- **Choice**: `BullMQ` (on Redis) with graceful in-process fallback
-- **Justification**: BullMQ provides persistent queue management, job deduplication, retry exponential backoff, and distributed worker scaling. In local environments where Redis is omitted, an automated `setInterval` fallback ensures overdue tasks are reliably flagged without crashing the application.
+- **Choice**: `BullMQ` (on Redis) with graceful in-process interval fallback
+- **Justification**: BullMQ provides persistent queue management, job deduplication, and retry exponential backoff. In local environments where Redis is omitted, an automated `setInterval` fallback ensures overdue tasks are reliably flagged without crashing the application.
 
 ### 3. Token Storage Approach
 - **Choice**: Access Tokens (Memory/Bearer Header) + Refresh Tokens (`HttpOnly` Cookie)
@@ -87,41 +73,47 @@ Relational PostgreSQL schema configured via Prisma ORM (`prisma/schema.prisma`).
 
 ---
 
-## 🚀 Local Setup & Quick Start
+## 🚀 Quick Start Guide
 
-### Prerequisites
-- Node.js (v20+)
-- pnpm (v9+)
-- Docker & Docker Compose
+### 1. Prerequisites
+- **Node.js**: v20 or higher
+- **pnpm**: v9 or higher
+- **Docker Desktop**: for running PostgreSQL and Redis containers
 
-### 1. Environment Configuration
-Copy `.env.example` to `.env`:
+### 2. Install Workspace Dependencies
 ```bash
-cp .env.example .env
+pnpm install
 ```
 
-### 2. Start PostgreSQL & Redis Containers
+### 3. Spin Up PostgreSQL and Redis Containers
 ```bash
+cd server
 docker compose up -d
 ```
 
-### 3. Run Database Migrations & Seed Data
+### 4. Configure Server Environment & Seed Database
 ```bash
+cp .env.example .env
 pnpm prisma migrate dev --name init
 pnpm prisma db seed
+cd ..
 ```
 
-### 4. Start Server
+### 5. Launch Client & Server in Parallel
+From the workspace root:
 ```bash
 pnpm dev
 ```
-The server will start at `http://localhost:5000`. Interactive Swagger UI is available at `http://localhost:5000/api/docs`.
+
+- **Web Application**: `http://localhost:5173`
+- **REST API**: `http://localhost:5000`
+- **Interactive Swagger Documentation**: `http://localhost:5000/api/docs`
 
 ---
 
 ## 👥 Seed Accounts & Default Logins
 
-All pre-configured seed users use the default password: `Password@123`
+All pre-configured seed accounts use the default password: `Password@123`
 
 | Name | Role | Email | Scope in Seed Data |
 | :--- | :--- | :--- | :--- |

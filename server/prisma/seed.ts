@@ -16,10 +16,10 @@ async function main() {
 
   const defaultPasswordHash = await bcrypt.hash('Password@123', 10);
 
-  // 1. Users
+  // Seed default team members across roles
   const admin = await prisma.user.create({
     data: {
-      name: 'Sarah Connor',
+      name: 'Aarav Mehta',
       email: 'admin@velozity.com',
       passwordHash: defaultPasswordHash,
       role: UserRole.ADMIN,
@@ -71,16 +71,16 @@ async function main() {
     },
   });
 
-  const devAlex = await prisma.user.create({
+  const devAnanya = await prisma.user.create({
     data: {
-      name: 'Alex Chen',
-      email: 'alex@velozity.com',
+      name: 'Ananya Roy',
+      email: 'ananya@velozity.com',
       passwordHash: defaultPasswordHash,
       role: UserRole.DEVELOPER,
     },
   });
 
-  // 2. Clients
+  // Clients
   const clientAcme = await prisma.client.create({
     data: {
       name: 'Acme Corp',
@@ -102,7 +102,7 @@ async function main() {
     },
   });
 
-  // 3. Projects
+  // Projects
   const projectEcommerce = await prisma.project.create({
     data: {
       name: 'E-commerce Platform',
@@ -136,7 +136,7 @@ async function main() {
   const futureDate2 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const futureDate3 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-  // 4. Tasks - E-commerce Platform
+  // E-commerce Platform tasks
   const task1 = await prisma.task.create({
     data: {
       projectId: projectEcommerce.id,
@@ -194,7 +194,7 @@ async function main() {
       projectId: projectEcommerce.id,
       title: 'Project setup & DB migrations',
       description: 'Baseline schema setup and initial seed configuration.',
-      assignedTo: devAlex.id,
+      assignedTo: devAnanya.id,
       status: TaskStatus.DONE,
       priority: TaskPriority.LOW,
       dueDate: pastDate2,
@@ -221,7 +221,7 @@ async function main() {
       projectId: projectMobileApp.id,
       title: 'Design login page',
       description: 'Theme updates and form validation.',
-      assignedTo: devAlex.id,
+      assignedTo: devAnanya.id,
       status: TaskStatus.TODO,
       priority: TaskPriority.HIGH,
       dueDate: futureDate1,
@@ -260,7 +260,7 @@ async function main() {
       projectId: projectMobileApp.id,
       title: 'Biometric authentication fallback',
       description: 'FaceID and fingerprint unlock for session token retrieval.',
-      assignedTo: devAlex.id,
+      assignedTo: devAnanya.id,
       status: TaskStatus.IN_REVIEW,
       priority: TaskPriority.HIGH,
       dueDate: futureDate2,
@@ -339,7 +339,7 @@ async function main() {
       projectId: projectCRM.id,
       title: 'Performance testing',
       description: 'Benchmarking socket connection throughput under concurrency.',
-      assignedTo: devAlex.id,
+      assignedTo: devAnanya.id,
       status: TaskStatus.IN_REVIEW,
       priority: TaskPriority.MEDIUM,
       dueDate: futureDate2,
@@ -373,7 +373,7 @@ async function main() {
     },
   });
 
-  // 5. Activity logs
+  // Activity logs
   const logEntries = [
     {
       projectId: projectEcommerce.id,
@@ -418,11 +418,11 @@ async function main() {
     {
       projectId: projectEcommerce.id,
       taskId: task5.id,
-      userId: devAlex.id,
+      userId: devAnanya.id,
       action: 'TASK_STATUS_UPDATED',
       oldStatus: TaskStatus.IN_REVIEW,
       newStatus: TaskStatus.DONE,
-      metadata: { taskTitle: task5.title, message: 'Alex updated Task #5 status to Done' },
+      metadata: { taskTitle: task5.title, message: 'Ananya updated Task #5 status to Done' },
       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
     },
     {
@@ -441,7 +441,7 @@ async function main() {
     await prisma.activityLog.create({ data: entry });
   }
 
-  // 6. Notifications
+  // Notifications
   const notifications = [
     {
       userId: devRavi.id,
