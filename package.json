@@ -7,7 +7,7 @@
     "dev": "pnpm --parallel dev",
     "dev:server": "pnpm --filter server dev",
     "dev:client": "pnpm --filter client dev",
-    "build": "pnpm --filter server build && pnpm --filter client build",
+    "build": "pnpm --filter server build && pnpm --filter client build && node -e \"require('fs').cpSync('client/dist', 'dist', {recursive: true})\"",
     "postinstall": "pnpm --filter server exec prisma generate",
     "seed": "pnpm --filter server seed"
   },
