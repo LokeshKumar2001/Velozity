@@ -13,7 +13,13 @@ export const createApp = (): Express => {
 
   app.use(
     cors({
-      origin: env.CLIENT_URL || 'http://localhost:5173',
+      origin: (origin, callback) => {
+        if (!origin || origin.includes('localhost') || origin.includes('vercel.app')) {
+          callback(null, true);
+        } else {
+          callback(null, true);
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
@@ -37,6 +43,8 @@ export const createApp = (): Express => {
   });
 
   app.use('/api', apiRouter);
+  app.use('/', apiRouter);
+
 
   app.use((req: Request, res: Response) => {
     res.status(404).json({
