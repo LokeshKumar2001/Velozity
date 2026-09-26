@@ -75,7 +75,7 @@ Relational PostgreSQL schema configured via Prisma ORM (`prisma/schema.prisma`).
 
 ### 1. WebSockets (`Socket.io`) vs Native WebSockets / SSE
 - **Choice**: `Socket.io`
-- **Justification**: Socket.io provides out-of-the-box room abstraction (`socket.join`), automatic reconnection handling, heartbeat pinging, and fallback transports. Room segregation (`global:admin`, `project:{id}`, `user:{id}`) ensures that role permission boundaries are preserved during real-time broadcasts without leaking events client-side.
+- **Justification**: Socket.io provides room abstraction (`socket.join`), automatic reconnection handling, heartbeat pinging, and fallback transports. Room segregation (`global:admin`, `project:{id}`, `user:{id}`) ensures role permission boundaries are preserved during real-time broadcasts without leaking data client-side.
 
 ### 2. Background Jobs: `BullMQ` vs `node-cron`
 - **Choice**: `BullMQ` (on Redis) with graceful in-process fallback
@@ -87,7 +87,15 @@ Relational PostgreSQL schema configured via Prisma ORM (`prisma/schema.prisma`).
 
 ---
 
-## 🚀 Local Setup & Quick Start
+## ⚠️ Known Limitations
+
+1. **Single-Instance WebSocket Adapter**: The Socket.io server runs with an in-memory adapter. Scaling horizontally across multiple server processes behind a load balancer requires attaching `@socket.io/redis-adapter` for multi-node event fanout.
+2. **In-Process Job Queue Fallback**: When Redis is unavailable, BullMQ falls back to a single-node `setInterval` scheduler. In high-concurrency production deployments, standalone Redis-backed BullMQ worker processes should handle queue execution.
+3. **DB Catchup Polling on Reconnect**: Offline clients catching up on missed activity logs execute a indexed SQL query (`LIMIT 20`). Under heavy reconnect spikes, adding a Redis Sorted Set per project would offload database read queries.
+
+---
+
+## 🚀 Local Setup & Quick Start (Docker Preferred)
 
 ### Prerequisites
 - Node.js (v20+)

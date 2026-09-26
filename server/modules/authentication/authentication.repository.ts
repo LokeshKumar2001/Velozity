@@ -14,6 +14,17 @@ export class AuthenticationRepository {
     });
   }
 
+  async createUser(data: { name: string; email: string; passwordHash: string; role?: any }): Promise<User> {
+    return prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        passwordHash: data.passwordHash,
+        role: data.role || 'DEVELOPER',
+      },
+    });
+  }
+
   async saveRefreshToken(userId: string, tokenHash: string, expiresAt: Date): Promise<RefreshToken> {
     return prisma.refreshToken.create({
       data: {

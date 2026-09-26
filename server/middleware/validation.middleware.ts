@@ -14,10 +14,18 @@ export const validate = (targets: ValidationTargets) => {
         req.body = await targets.body.parseAsync(req.body);
       }
       if (targets.query) {
-        req.query = (await targets.query.parseAsync(req.query)) as any;
+        const parsedQuery = (await targets.query.parseAsync(req.query)) as Record<string, any>;
+        for (const key of Object.keys(req.query)) {
+          delete (req.query as Record<string, any>)[key];
+        }
+        Object.assign(req.query, parsedQuery);
       }
       if (targets.params) {
-        req.params = (await targets.params.parseAsync(req.params)) as any;
+        const parsedParams = (await targets.params.parseAsync(req.params)) as Record<string, any>;
+        for (const key of Object.keys(req.params)) {
+          delete (req.params as Record<string, any>)[key];
+        }
+        Object.assign(req.params, parsedParams);
       }
       next();
     } catch (error) {

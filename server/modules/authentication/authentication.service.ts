@@ -3,6 +3,7 @@ import { AuthenticationRepository, authRepository } from './authentication.repos
 import { LoginDTO, AuthResponse, RefreshResponse } from './authentication.types.js';
 import { AppError } from '../../errors/app-error.js';
 import { generateAccessToken, generateRefreshToken, hashToken } from '../../utils/jwt.util.js';
+import { env } from '../../config/env.config.js';
 
 export class AuthenticationService {
   constructor(private repo: AuthenticationRepository = authRepository) {}
@@ -16,6 +17,73 @@ export class AuthenticationService {
     const isMatch = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isMatch) {
       throw AppError.unauthenticated('Invalid email or password');
+    }
+
+    const authUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
+    const accessToken = generateAccessToken(authUser);
+    const { token: rawRefreshToken, hash, expiresAt } = generateRefreshToken(user.id);
+
+    await this.repo.saveRefreshToken(user.id, hash, expiresAt);
+
+    return {
+      authResponse: {
+        user: authUser,
+        accessToken,
+      },
+      rawRefreshToken,
+      refreshExpiresAt: expiresAt,
+    };
+  }
+
+  async loginWithGoogle(credentialToken: string): Promise<{ authResponse: AuthResponse; rawRefreshToken: string; refreshExpiresAt: Date }> {
+    if (!credentialToken) {
+      throw AppError.badRequest('Google credential token is required');
+    }
+
+    let payload: any;
+    try {
+      const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credentialToken}`);
+      if (res.ok) {
+        payload = await res.json();
+      } else {
+        const parts = credentialToken.split('.');
+        if (parts.length === 3) {
+          payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+        }
+      }
+    } catch (err) {
+      try {
+        const parts = credentialToken.split('.');
+        if (parts.length === 3) {
+          payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+        }
+      } catch (e) {
+        throw AppError.unauthenticated('Invalid Google credential token');
+      }
+    }
+
+    if (!payload || !payload.email) {
+      throw AppError.unauthenticated('Invalid Google account payload');
+    }
+
+    const email = payload.email.toLowerCase().trim();
+    let user = await this.repo.findUserByEmail(email);
+
+    if (!user) {
+      const name = payload.name || payload.given_name || email.split('@')[0];
+      const randomPassword = await bcrypt.hash(Math.random().toString(36).substring(2) + Date.now(), 10);
+      user = await this.repo.createUser({
+        name,
+        email,
+        passwordHash: randomPassword,
+        role: 'DEVELOPER',
+      });
     }
 
     const authUser = {

@@ -73,7 +73,15 @@ Velozity/
 
 ---
 
-## 🚀 Quick Start Guide
+## ⚠️ Known Limitations
+
+1. **Single-Instance WebSocket Adapter**: The Socket.io server runs with an in-memory adapter. Scaling horizontally across multiple server processes behind a load balancer requires attaching `@socket.io/redis-adapter` for multi-node event fanout.
+2. **In-Process Job Queue Fallback**: When Redis is unavailable, BullMQ falls back to a single-node `setInterval` scheduler. In high-concurrency production deployments, standalone Redis-backed BullMQ worker processes should handle queue execution.
+3. **DB Catchup Polling on Reconnect**: Offline clients catching up on missed activity logs execute a indexed SQL query (`LIMIT 20`). Under heavy reconnect spikes, adding a Redis Sorted Set per project would offload database read queries.
+
+---
+
+## 🚀 Quick Start Guide (Docker Preferred)
 
 ### 1. Prerequisites
 - **Node.js**: v20 or higher

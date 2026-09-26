@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usersApi } from '../api/client.ts';
 import type { User, UserRole } from '../types/index.ts';
+import { ActionMenu } from '../components/ui/action-menu.tsx';
 import { 
   Plus, 
   Search, 
-  MoreHorizontal, 
   X,
-  UserPlus
+  UserPlus,
+  CheckSquare,
+  KeyRound,
+  Trash2
 } from 'lucide-react';
 import { Button } from '../components/ui/button.tsx';
 import { Input } from '../components/ui/input.tsx';
@@ -22,6 +26,7 @@ import {
 } from '../components/ui/table.tsx';
 
 export const UsersPage: React.FC = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -219,9 +224,30 @@ export const UsersPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-slate-500">{lastActiveStr}</TableCell>
                     <TableCell className="text-right">
-                      <button className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                      <ActionMenu
+                        items={[
+                          {
+                            label: 'View Assigned Tasks',
+                            icon: CheckSquare,
+                            onClick: () => navigate(`/tasks?assignedTo=${u.id}`),
+                          },
+                          {
+                            label: 'Reset Password',
+                            icon: KeyRound,
+                            onClick: () => alert(`Password reset instructions sent to ${u.email}`),
+                          },
+                          {
+                            label: 'Deactivate User',
+                            icon: Trash2,
+                            variant: 'danger',
+                            onClick: () => {
+                              if (confirm(`Are you sure you want to deactivate ${u.name}?`)) {
+                                alert(`Deactivated user ${u.name}`);
+                              }
+                            },
+                          },
+                        ]}
+                      />
                     </TableCell>
                   </TableRow>
                 );

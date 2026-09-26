@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../redux/store.ts';
 import { fetchProjects } from '../redux/projectsSlice.ts';
-import { clientsApi } from '../api/client.ts';
+import { clientsApi, projectsApi } from '../api/client.ts';
 import { CreateProjectModal } from '../components/CreateProjectModal.tsx';
+import { ActionMenu } from '../components/ui/action-menu.tsx';
 import { 
   FolderKanban, 
   Plus, 
   Search, 
-  MoreHorizontal,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Eye,
+  Edit3,
+  Trash2,
+  CheckSquare
 } from 'lucide-react';
 import { Button } from '../components/ui/button.tsx';
 import { Input } from '../components/ui/input.tsx';
@@ -26,6 +30,7 @@ import {
 
 export const ProjectsPage: React.FC = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { items: projects, isLoading } = useAppSelector((state) => state.projects);
   const { user } = useAppSelector((state) => state.auth);
 
@@ -34,11 +39,22 @@ export const ProjectsPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [clients, setClients] = useState<any[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
-    dispatch(fetchProjects({ search: search.trim() || undefined }));
+    dispatch(
+      fetchProjects({
+        search: search.trim() || undefined,
+        clientId: selectedClient !== 'ALL' ? selectedClient : undefined,
+      })
+    );
     clientsApi.getAll().then(setClients).catch(() => {});
-  }, [dispatch, search]);
+  }, [dispatch, search, selectedClient]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedClient, selectedStatus]);
 
   const canCreate = user?.role === 'ADMIN' || user?.role === 'PROJECT_MANAGER';
 
@@ -58,7 +74,63 @@ export const ProjectsPage: React.FC = () => {
     return 'success';
   };
 
-  const filteredProjects = projects.length > 0 ? projects : MOCK_PROJECTS;
+  const rawList = projects.length > 0 ? projects : MOCK_PROJECTS;
+
+  const filteredProjects = rawList.filter((p: any, idx) => {
+    const isReal = Boolean(p.createdAt);
+    const clientName = isReal ? (p.client?.name || 'Acme Corp') : p.client;
+    const clientId = isReal ? p.clientId : p.client;
+    const statusLabel = isReal ? (idx === 2 ? 'On Hold' : idx === 5 ? 'Completed' : 'Active') : p.status;
+    const name = p.name || '';
+    const desc = p.description || '';
+
+    // Search filter
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const matchName = name.toLowerCase().includes(q);
+      const matchClient = clientName.toLowerCase().includes(q);
+      const matchDesc = desc.toLowerCase().includes(q);
+      if (!matchName && !matchClient && !matchDesc) return false;
+    }
+
+    // Client filter
+    if (selectedClient !== 'ALL') {
+      const target = selectedClient.toLowerCase();
+      const cName = (clientName || '').toLowerCase();
+      const cId = (clientId || '').toLowerCase();
+      const pClientId = (p.client?.id || '').toLowerCase();
+
+      const matches = cName.includes(target) || cId === target || pClientId === target;
+      if (!matches) return false;
+    }
+
+    // Status filter
+    if (selectedStatus !== 'ALL') {
+      if (selectedStatus === 'ACTIVE' && statusLabel !== 'Active') return false;
+      if (selectedStatus === 'ON_HOLD' && statusLabel !== 'On Hold') return false;
+      if (selectedStatus === 'COMPLETED' && statusLabel !== 'Completed') return false;
+    }
+
+    return true;
+  });
+
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage) || 1;
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Collect unique client list for dropdown
+  const allClientOptions = clients.length > 0 
+    ? clients 
+    : [
+        { id: 'Acme Corp', name: 'Acme Corp' },
+        { id: 'Globex Inc.', name: 'Globex Inc.' },
+        { id: 'TechSolutions', name: 'TechSolutions' },
+        { id: 'NextGen Ltd', name: 'NextGen Ltd' },
+        { id: 'Delta Co', name: 'Delta Co' },
+        { id: 'Bright Media', name: 'Bright Media' },
+      ];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -82,7 +154,7 @@ export const ProjectsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Filter Toolbar matching Screen 3 */}
+      {/* Filter Toolbar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/90 shadow-xs">
         {/* Search */}
         <div className="relative w-full sm:w-72">
@@ -92,7 +164,7 @@ export const ProjectsPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search projects..."
-            className="pl-10"
+            className="pl-10 text-xs"
           />
         </div>
 
@@ -101,11 +173,11 @@ export const ProjectsPage: React.FC = () => {
           <select
             value={selectedClient}
             onChange={(e) => setSelectedClient(e.target.value)}
-            className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:bg-white focus:outline-none focus:border-blue-500"
+            className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">All Clients</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
+            {allClientOptions.map((c: any) => (
+              <option key={c.id || c.name} value={c.name || c.id}>
                 {c.name}
               </option>
             ))}
@@ -114,7 +186,7 @@ export const ProjectsPage: React.FC = () => {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:bg-white focus:outline-none focus:border-blue-500"
+            className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">All Status</option>
             <option value="ACTIVE">Active</option>
@@ -124,7 +196,7 @@ export const ProjectsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Data Table matching Screen 3 */}
+      {/* Data Table */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
@@ -145,8 +217,14 @@ export const ProjectsPage: React.FC = () => {
                   Loading projects...
                 </TableCell>
               </TableRow>
+            ) : paginatedProjects.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="py-12 text-center text-slate-400">
+                  No matching projects found.
+                </TableCell>
+              </TableRow>
             ) : (
-              filteredProjects.map((p: any, idx) => {
+              paginatedProjects.map((p: any, idx) => {
                 const isReal = Boolean(p.createdAt);
                 const name = p.name;
                 const clientName = isReal ? p.client?.name || 'Acme Corp' : p.client;
@@ -174,9 +252,44 @@ export const ProjectsPage: React.FC = () => {
                     <TableCell className="font-bold text-slate-800">{taskCount}</TableCell>
                     <TableCell className="text-slate-500">{dueDate}</TableCell>
                     <TableCell className="text-right">
-                      <button className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                      <ActionMenu
+                        items={[
+                          {
+                            label: 'View Details',
+                            icon: Eye,
+                            onClick: () => navigate(isReal ? `/projects/${p.id}` : '/projects'),
+                          },
+                          {
+                            label: 'View Tasks',
+                            icon: CheckSquare,
+                            onClick: () => navigate(`/tasks?search=${encodeURIComponent(name)}`),
+                          },
+                          {
+                            label: 'Edit Project',
+                            icon: Edit3,
+                            onClick: () => alert(`Editing project: ${name}`),
+                          },
+                          {
+                            label: 'Delete Project',
+                            icon: Trash2,
+                            variant: 'danger',
+                            onClick: async () => {
+                              if (confirm(`Are you sure you want to delete project "${name}"?`)) {
+                                if (isReal) {
+                                  try {
+                                    await projectsApi.delete(p.id);
+                                    dispatch(fetchProjects());
+                                  } catch (err: any) {
+                                    alert(err.response?.data?.error?.message || 'Failed to delete project');
+                                  }
+                                } else {
+                                  alert(`Deleted ${name}`);
+                                }
+                              }
+                            },
+                          },
+                        ]}
+                      />
                     </TableCell>
                   </TableRow>
                 );
@@ -185,20 +298,32 @@ export const ProjectsPage: React.FC = () => {
           </TableBody>
         </Table>
 
-        {/* Pagination Footer matching Screen 3 */}
+        {/* Pagination Footer */}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>Showing {filteredProjects.length} projects</span>
-          <div className="flex items-center gap-1.5">
-            <button className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50">
+          <span>
+            Showing {filteredProjects.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{' '}
+            {Math.min(currentPage * itemsPerPage, filteredProjects.length)} of {filteredProjects.length} projects
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
+            >
               <ChevronLeft className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Prev</span>
             </button>
-            <button className="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-xs">
-              1
-            </button>
-            <button className="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs">
-              2
-            </button>
-            <button className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50">
+
+            <span className="px-2 font-semibold text-slate-700">
+              {currentPage} / {totalPages}
+            </span>
+
+            <button
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
+            >
+              <span className="hidden sm:inline">Next</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>

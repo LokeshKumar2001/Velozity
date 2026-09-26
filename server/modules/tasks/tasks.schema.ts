@@ -31,4 +31,6 @@ export const taskQuerySchema = z.object({
   dueDateFrom: z.string().optional(),
   dueDateTo: z.string().optional(),
   search: z.string().optional(),
+  page: z.string().optional(),
+  limit: z.string().optional(),
 });

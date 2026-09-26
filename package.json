@@ -7,6 +7,8 @@
     "dev:server": "pnpm --filter server dev",
     "dev:client": "pnpm --filter client dev",
     "build": "pnpm --filter server build && pnpm --filter client build",
+    "postinstall": "pnpm --filter server exec prisma generate",
     "seed": "pnpm --filter server seed"
+
   }
 }

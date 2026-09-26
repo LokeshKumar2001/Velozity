@@ -8,9 +8,21 @@ interface TaskCardProps {
   task: Task;
   showProject?: boolean;
   onClick?: () => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
+  isDragging?: boolean;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, showProject = true, onClick }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({
+  task,
+  showProject = true,
+  onClick,
+  draggable,
+  onDragStart,
+  onDragEnd,
+  isDragging,
+}) => {
   const getPriorityVariant = (priority: TaskPriority) => {
     switch (priority) {
       case 'CRITICAL':
@@ -40,8 +52,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, showProject = true, on
 
   return (
     <div
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onClick={onClick}
-      className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-blue-400 transition-all cursor-pointer space-y-3 group"
+      className={`bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-blue-400 transition-all cursor-grab active:cursor-grabbing space-y-3 group ${
+        isDragging ? 'opacity-40 scale-95 border-dashed border-blue-500 ring-2 ring-blue-500/30' : ''
+      }`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">

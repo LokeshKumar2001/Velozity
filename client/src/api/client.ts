@@ -94,6 +94,10 @@ export const authApi = {
     const res = await apiClient.post<{ success: boolean; data: { user: User; accessToken: string } }>('/auth/login', credentials);
     return res.data.data;
   },
+  loginWithGoogle: async (credential: string) => {
+    const res = await apiClient.post<{ success: boolean; data: { user: User; accessToken: string } }>('/auth/google', { credential });
+    return res.data.data;
+  },
   refresh: async () => {
     const res = await apiClient.post<{ success: boolean; data: { accessToken: string } }>('/auth/refresh');
     return res.data.data;

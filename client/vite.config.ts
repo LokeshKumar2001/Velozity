@@ -20,6 +20,12 @@ export default defineConfig({
       '/socket.io': {
         target: 'http://localhost:5000',
         ws: true,
+        configure: (proxy) => {
+          proxy.on('error', (err: any) => {
+            if (err.code === 'ECONNRESET' || err.code === 'ECONNABORTED') return;
+            console.error('Socket proxy error:', err.message);
+          });
+        },
       },
     },
   },

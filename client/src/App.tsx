@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { store, useAppDispatch } from './redux/store.ts';
 import { checkAuth } from './redux/authSlice.ts';
 import { useSocket } from './hooks/useSocket.ts';
+import { ThemeProvider } from './context/ThemeContext.tsx';
 import { Sidebar } from './components/Sidebar.tsx';
 import { TopHeader } from './components/TopHeader.tsx';
 import { ProtectedRoute } from './components/ProtectedRoute.tsx';
@@ -22,7 +23,7 @@ const AppLayout: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] text-slate-800">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] dark:bg-[#0b132b] text-slate-800 dark:text-slate-100">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex flex-shrink-0">
         <Sidebar />
@@ -44,7 +45,7 @@ const AppLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <TopHeader onMobileMenuToggle={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#f8fafc]">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#f8fafc] dark:bg-[#0b132b]">
           <Outlet />
         </main>
       </div>
@@ -97,7 +98,9 @@ export const AppContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <Provider store={store}>
-      <AppContent />
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </Provider>
   );
 };

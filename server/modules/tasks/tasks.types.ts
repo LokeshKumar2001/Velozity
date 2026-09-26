@@ -30,4 +30,6 @@ export interface TaskFilterQuery {
   dueDateFrom?: string;
   dueDateTo?: string;
   search?: string;
+  page?: string;
+  limit?: string;
 }

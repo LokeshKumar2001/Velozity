@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { clientsApi } from '../api/client.ts';
+import { ActionMenu } from '../components/ui/action-menu.tsx';
 import { 
   Building2, 
   Plus, 
   Search, 
-  MoreHorizontal, 
   FolderKanban, 
   Mail,
-  X
+  X,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 
 export const ClientsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -115,9 +119,30 @@ export const ClientsPage: React.FC = () => {
                   <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
                     <Building2 className="w-5 h-5" />
                   </div>
-                  <button className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
+                  <ActionMenu
+                    items={[
+                      {
+                        label: 'View Projects',
+                        icon: FolderKanban,
+                        onClick: () => navigate(`/projects`),
+                      },
+                      {
+                        label: 'Edit Client',
+                        icon: Edit3,
+                        onClick: () => alert(`Editing client: ${client.name}`),
+                      },
+                      {
+                        label: 'Delete Client',
+                        icon: Trash2,
+                        variant: 'danger',
+                        onClick: () => {
+                          if (confirm(`Are you sure you want to delete client "${client.name}"?`)) {
+                            alert(`Deleted client ${client.name}`);
+                          }
+                        },
+                      },
+                    ]}
+                  />
                 </div>
 
                 <div>

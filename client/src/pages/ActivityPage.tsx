@@ -16,20 +16,28 @@ export const ActivityPage: React.FC = () => {
 
   useEffect(() => {
     dispatch(fetchProjects());
-    dispatch(fetchActivityFeed({ limit: 50 }));
   }, [dispatch]);
 
+  useEffect(() => {
+    dispatch(
+      fetchActivityFeed({
+        projectId: selectedProject !== 'ALL' ? selectedProject : undefined,
+        limit: 50,
+      })
+    );
+  }, [dispatch, selectedProject]);
+
   const MOCK_ACTIVITIES = [
-    { id: '1', userName: 'Ravi', message: 'moved Task #12 from In Progress → In Review', time: '2 mins ago', project: 'E-commerce Platform', initials: 'R', color: 'bg-purple-600' },
-    { id: '2', userName: 'Priya', message: "created a new project 'E-commerce Platform'", time: '12 mins ago', project: 'E-commerce Platform', initials: 'P', color: 'bg-teal-600' },
-    { id: '3', userName: 'Vikram', message: 'was assigned to Task #8', time: '25 mins ago', project: 'Mobile App Redesign', initials: 'V', color: 'bg-emerald-600' },
-    { id: '4', userName: 'Sneha', message: 'commented on Task #5', time: '1 hour ago', project: 'E-commerce Platform', initials: 'S', color: 'bg-blue-600' },
-    { id: '5', userName: 'Rahul', message: 'updated Task #3 status to Done', time: '2 hours ago', project: 'Website Maintenance', initials: 'R', color: 'bg-indigo-600' },
-    { id: '6', userName: 'Admin', message: "created a new client 'NextGen Ltd'", time: '3 hours ago', project: 'Global', initials: 'A', color: 'bg-[#0b132b]' },
+    { id: '1', userName: 'Ravi Teja', message: 'moved Task #12 from In Progress → In Review', time: '2 mins ago', project: 'E-commerce Platform', initials: 'RT', color: 'bg-purple-600' },
+    { id: '2', userName: 'Priya Sharma', message: "created a new project 'E-commerce Platform'", time: '12 mins ago', project: 'E-commerce Platform', initials: 'PS', color: 'bg-teal-600' },
+    { id: '3', userName: 'Rahul Kumar', message: 'was assigned to Task #8', time: '25 mins ago', project: 'Mobile App Redesign', initials: 'RK', color: 'bg-emerald-600' },
+    { id: '4', userName: 'Sneha Reddy', message: 'commented on Task #5', time: '1 hour ago', project: 'E-commerce Platform', initials: 'SR', color: 'bg-blue-600' },
+    { id: '5', userName: 'Aarav Mehta', message: 'updated Task #3 status to Done', time: '2 hours ago', project: 'Website Maintenance', initials: 'AM', color: 'bg-indigo-600' },
+    { id: '6', userName: 'Aarav Mehta', message: "created a new client 'NextGen Ltd'", time: '3 hours ago', project: 'Global', initials: 'AM', color: 'bg-[#0b132b]' },
   ];
 
   const getInitials = (name?: string) => {
-    if (!name) return 'AD';
+    if (!name) return 'AM';
     const parts = name.split(' ');
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
     return name.slice(0, 2).toUpperCase();
@@ -47,7 +55,23 @@ export const ActivityPage: React.FC = () => {
     return colors[index % colors.length];
   };
 
-  const feedList = activities.length > 0 ? activities : MOCK_ACTIVITIES;
+  const rawList = activities.length > 0 ? activities : MOCK_ACTIVITIES;
+
+  const filteredActivities = rawList.filter((act: any) => {
+    const isReal = Boolean(act.createdAt);
+    const projId = isReal ? act.projectId : act.project;
+
+    if (activeTab === 'global' && projId && projId !== 'Global') {
+      // In global feed tab, show global system events or all events
+    }
+
+    if (selectedProject !== 'ALL') {
+      if (isReal && act.projectId !== selectedProject && act.project?.id !== selectedProject) return false;
+      if (!isReal && act.project !== selectedProject && act.project !== 'Global') return false;
+    }
+
+    return true;
+  });
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-200">
@@ -59,13 +83,13 @@ export const ActivityPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Tabs, Filter & Live Badge matching Screen 6 */}
+      {/* Tabs, Filter & Live Badge */}
       <Card className="p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         {/* Feed Tabs */}
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start">
           <button
             onClick={() => setActiveTab('project')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'project'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800'
@@ -75,7 +99,7 @@ export const ActivityPage: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('global')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'global'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800'
@@ -90,7 +114,7 @@ export const ActivityPage: React.FC = () => {
           <select
             value={selectedProject}
             onChange={(e) => setSelectedProject(e.target.value)}
-            className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-700 focus:bg-white focus:outline-none focus:border-blue-500"
+            className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-700 focus:bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">All Projects</option>
             {projects.map((p) => (
@@ -107,16 +131,20 @@ export const ActivityPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Feed List matching Screen 6 */}
+      {/* Feed List */}
       <div className="space-y-3">
         {isLoading && activities.length === 0 ? (
-          <div className="flex items-center justify-center min-h-[40vh]">
+          <div className="flex items-center justify-center min-h-[30vh]">
             <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin"></div>
           </div>
+        ) : filteredActivities.length === 0 ? (
+          <Card className="p-8 text-center text-slate-400 text-xs font-medium">
+            No activity records matching selected project filter.
+          </Card>
         ) : (
-          feedList.map((act: any, i: number) => {
+          filteredActivities.map((act: any, i: number) => {
             const isReal = Boolean(act.createdAt);
-            const userName = isReal ? act.user?.name || act.userName || 'Admin' : act.userName;
+            const userName = isReal ? act.user?.name || act.userName || 'Aarav Mehta' : act.userName;
             const message = isReal ? act.metadata?.message || act.formattedMessage || act.action : act.message;
             const timeAgo = isReal
               ? new Date(act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

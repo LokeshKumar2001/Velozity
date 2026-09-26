@@ -47,6 +47,10 @@ export class TasksRepository {
       ];
     }
 
+    const pageNum = filters.page ? Math.max(1, parseInt(filters.page, 10)) : undefined;
+    const limitNum = filters.limit ? Math.min(Math.max(1, parseInt(filters.limit, 10)), 100) : undefined;
+    const skip = pageNum && limitNum ? (pageNum - 1) * limitNum : undefined;
+
     return prisma.task.findMany({
       where,
       include: {
@@ -61,6 +65,8 @@ export class TasksRepository {
         { priority: 'desc' },
         { dueDate: 'asc' },
       ],
+      ...(skip !== undefined ? { skip } : {}),
+      ...(limitNum !== undefined ? { take: limitNum } : {}),
     });
   }
 

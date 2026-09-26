@@ -12,7 +12,7 @@ export class AuthenticationController {
       res.cookie('refreshToken', rawRefreshToken, {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
         expires: refreshExpiresAt,
         path: '/api/auth',
       });
@@ -20,6 +20,29 @@ export class AuthenticationController {
       res.status(200).json({
         success: true,
         message: 'Login successful',
+        data: authResponse,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  loginWithGoogle = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const token = req.body?.credential || req.body?.idToken || req.body?.token;
+      const { authResponse, rawRefreshToken, refreshExpiresAt } = await this.service.loginWithGoogle(token);
+
+      res.cookie('refreshToken', rawRefreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+        expires: refreshExpiresAt,
+        path: '/api/auth',
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Google login successful',
         data: authResponse,
       });
     } catch (error) {
@@ -36,7 +59,7 @@ export class AuthenticationController {
       res.cookie('refreshToken', newRawRefreshToken, {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
         expires: newExpiresAt,
         path: '/api/auth',
       });
@@ -61,7 +84,7 @@ export class AuthenticationController {
       res.clearCookie('refreshToken', {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
         path: '/api/auth',
       });
 

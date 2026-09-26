@@ -7,6 +7,7 @@ import { authenticateToken } from '../../middleware/auth.middleware.js';
 const router = Router();
 
 router.post('/login', validate({ body: loginSchema }), authController.login);
+router.post('/google', authController.loginWithGoogle);
 router.post('/refresh', authController.refreshToken);
 router.post('/logout', authController.logout);
 router.get('/me', authenticateToken, authController.getMe);

@@ -16,6 +16,8 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRATION: z.string().default('15m'),
   JWT_REFRESH_EXPIRATION: z.string().default('7d'),
   OVERDUE_JOB_INTERVAL_MINUTES: z.string().default('5').transform((val) => parseInt(val, 10)),
+  GOOGLE_CLIENT_ID: z.string().optional().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);
